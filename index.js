@@ -26,6 +26,10 @@ async function run() {
       .db("dermacare-online")
       .collection("treatment_list");
 
+    const appoinmentCollection = client
+      .db("dermacare-online")
+      .collection("appoinments");
+
     //All Treatment List
 
     app.get("/services", async (req, res) => {
@@ -33,6 +37,99 @@ async function run() {
       const cursor = dermacareCollection.find(query);
       const services = await cursor.toArray();
       res.send(services);
+    });
+
+    //Treatment/Service Details (Single)
+
+    app.get("/services/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const treatment = await dermacareCollection.findOne(query);
+      res.send(treatment);
+    });
+
+    // Adding a New Service
+
+    app.post("/services", async (req, res) => {
+      const newTreatment = req.body;
+      const result = await dermacareCollection.insertOne(newTreatment);
+      res.send(result);
+    });
+
+    // // Deleting Task
+
+    app.delete("/delete-service/:id", async (req, res) => {
+      const id = req.params.id;
+      const qurery = { _id: new ObjectId(id) };
+      const result = await dermacareCollection.deleteOne(qurery);
+      res.send(result);
+    });
+
+    // // Update Task Description
+
+    app.put("/update-service/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateDescription = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = {
+        upsert: true,
+      };
+      const updateDoc = {
+        $set: {
+          serviceName: updateDescription.serviceNameUpdate,
+          fees: updateDescription.feesUpdate,
+          description: updateDescription.descriptionUpdate,
+          img: updateDescription.imgUpdate,
+        },
+      };
+      const result = await dermacareCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+
+    // Taking Appoinment
+
+    app.post("/appoinments", async (req, res) => {
+      const newAppoinment = req.body;
+      const result = await appoinmentCollection.insertOne(newAppoinment);
+      res.send(result);
+    });
+
+    // All Appoinments
+    app.get("/all-appoinments", async (req, res) => {
+      const query = {};
+      const cursor = appoinmentCollection.find(query);
+      const all_appoinments = await cursor.toArray();
+      res.send(all_appoinments);
+    });
+
+    // Delete Appoinment
+
+    app.delete("/all-appoinments/:id", async (req, res) => {
+      const id = req.params.id;
+      const qurery = { _id: new ObjectId(id) };
+      const result = await appoinmentCollection.deleteOne(qurery);
+      res.send(result);
+    });
+
+    // My Appoinments
+
+    app.get("/my-appoinments/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const myAppoinments = await appoinmentCollection.findOne(query);
+      res.send(myAppoinments);
+    });
+
+    // find Appoinment By Email
+    app.get("/my-appoinments/email/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { userEmail: email };
+      const myAppoinments = await appoinmentCollection.find(query).toArray();
+      res.send(myAppoinments);
     });
 
     //Adding New Task
