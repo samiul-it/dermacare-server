@@ -1,6 +1,7 @@
 const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
+const query = require("express/lib/middleware/query");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
@@ -29,6 +30,8 @@ async function run() {
     const appoinmentCollection = client
       .db("dermacare-online")
       .collection("appoinments");
+
+    const userCollection = client.db("dermacare-online").collection("users");
 
     //All Treatment List
 
@@ -65,7 +68,7 @@ async function run() {
       res.send(result);
     });
 
-    // // Update Task Description
+    // // Update Service Description
 
     app.put("/update-service/:id", async (req, res) => {
       const id = req.params.id;
@@ -115,6 +118,23 @@ async function run() {
       res.send(result);
     });
 
+    //Update Appoinment Status
+
+    app.put("/appoinment-status/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const changeStatus = req.body;
+      console.log(changeStatus.newStatus);
+      // const filter = { email: email };
+      const updateDoc = {
+        $set: {
+          status: changeStatus.newStatus,
+        },
+      };
+      const result = await appoinmentCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     // My Appoinments
 
     app.get("/my-appoinments/:id", async (req, res) => {
@@ -130,6 +150,34 @@ async function run() {
       const query = { userEmail: email };
       const myAppoinments = await appoinmentCollection.find(query).toArray();
       res.send(myAppoinments);
+    });
+
+    //find Appoinment by service ID
+
+    app.get("/appoinment-by-serviceid/:id/:useremail", async (req, res) => {
+      const serviceId = req.params.id;
+      const userEmail = req.params.useremail;
+      // console.log(userEmail);
+      const query = { serviceId: serviceId, userEmail: userEmail };
+      const isExist = await appoinmentCollection.find(query).toArray();
+      console.log(isExist);
+      res.send(isExist);
+    });
+
+    //Add User
+
+    app.put("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      // console.log("Email", email);
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: user,
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send({ result, token });
     });
 
     //Adding New Task
